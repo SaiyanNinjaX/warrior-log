@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#0a0a0a"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Warrior Log"/>
+<title>Warrior Log</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,700;0,900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:#0a0a0a;
+  color:#f0f0f0;
+  font-family:'Inter',-apple-system,sans-serif;
+  min-height:100vh;
+  overscroll-behavior:none;
+  padding-bottom:calc(80px + env(safe-area-inset-bottom,0px));
+}
+input,textarea{
+  font-family:inherit;font-size:16px;color:#f0f0f0;
+  background:#141414;border:1.5px solid #1e1e1e;border-radius:14px;
+  padding:16px;width:100%;outline:none;-webkit-appearance:none;
+  transition:border-color .2s;
+}
+input:focus,textarea:focus{border-color:#c8ff00}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+textarea{resize:none;line-height:1.6}
+button{cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;border:none;background:none;color:inherit}
+::-webkit-scrollbar{width:0}
+
+/* SCREENS */
+.screen{display:none;padding:0 20px;padding-top:calc(env(safe-area-inset-top,0px) + 24px)}
+.screen.active{display:block}
+
+/* NAV */
+#nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:#0a0a0a;
+  border-top:1px solid #141414;
+  display:flex;
+  padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px));
+  z-index:200;
+}
+.nt{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.nd{
+  width:7px;height:7px;border-radius:50%;
+  background:#1e1e1e;
+  transition:background .2s, transform .25s;
+}
+.nt.on .nd{background:#c8ff00;transform:scale(1.5)}
+.nl{
+  font-size:9px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:#2a2a2a;transition:color .2s;
+}
+.nt.on .nl{color:#c8ff00}
+
+/* ═══════════════════════════════════
+   LOG SCREEN
+═══════════════════════════════════ */
+.date-hero{margin-bottom:36px}
+.date-big{
+  font-size:96px;font-weight:900;
+  color:#f0f0f0;line-height:.85;
+  letter-spacing:-5px;
+}
+.date-sub{
+  font-size:12px;font-weight:700;
+  color:#2a2a2a;letter-spacing:.16em;
+  text-transform:uppercase;margin-top:14px;
+}
+
+.srule{
+  display:flex;align-items:center;gap:14px;
+  margin:32px 0 18px;
+}
+.srule-label{
+  font-size:10px;font-weight:700;
+  color:#2a2a2a;letter-spacing:.18em;text-transform:uppercase;
+  white-space:nowrap;
+}
+.srule::after{content:'';flex:1;height:1px;background:#141414}
+
+.flabel{
+  font-size:10px;font-weight:700;
+  color:#2a2a2a;letter-spacing:.14em;text-transform:uppercase;
+  margin-bottom:10px;
+}
+
+/* Toggle */
+.togrow{display:flex;align-items:center;gap:16px;padding:6px 0;cursor:pointer}
+.togtrack{
+  width:54px;height:30px;border-radius:15px;
+  background:#141414;border:1.5px solid #1e1e1e;
+  position:relative;flex-shrink:0;
+  transition:background .2s,border-color .2s;
+}
+.togtrack.on{background:#c8ff00;border-color:#c8ff00}
+.togthumb{
+  position:absolute;top:4px;left:4px;
+  width:18px;height:18px;border-radius:50%;
+  background:#2a2a2a;transition:left .2s,background .2s;
+}
+.togtrack.on .togthumb{left:28px;background:#0a0a0a}
+.toglabel{font-size:15px;color:#444;transition:color .2s}
+.togtrack.on+.toglabel{color:#f0f0f0}
+
+/* Chips */
+.chiprow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.chip{
+  background:#141414;border:1.5px solid #1e1e1e;
+  border-radius:10px;color:#444;
+  font-size:13px;font-weight:700;
+  padding:9px 16px;transition:all .15s;
+  letter-spacing:.02em;
+}
+.chip.on{background:#c8ff00;border-color:#c8ff00;color:#0a0a0a}
+
+/* Exercise */
+.exblock{
+  background:#0f0f0f;border:1.5px solid #1a1a1a;
+  border-radius:20px;padding:18px;margin-bottom:12px;
+}
+.extop{display:flex;gap:10px;margin-bottom:16px;align-items:center}
+.extop input{flex:1;padding:12px 14px;font-size:14px;border-radius:12px}
+.exdelbtn{
+  border:1.5px solid #1e1e1e;border-radius:10px;
+  color:#333;padding:12px 14px;font-size:14px;line-height:1;flex-shrink:0;
+}
+.sethdr{
+  display:grid;grid-template-columns:28px 1fr 1fr 28px;
+  gap:6px;margin-bottom:8px;
+}
+.sethdr span{font-size:9px;color:#2a2a2a;text-align:center;letter-spacing:.1em;text-transform:uppercase}
+.setrow{
+  display:grid;grid-template-columns:28px 1fr 1fr 28px;
+  gap:6px;margin-bottom:6px;align-items:center;
+}
+.setn{font-size:11px;color:#2a2a2a;text-align:center;font-variant-numeric:tabular-nums}
+.setrow input{
+  text-align:center;padding:10px 6px;font-size:16px;font-weight:700;
+  border-radius:10px;letter-spacing:-.3px;
+}
+.setdelbtn{color:#222;font-size:13px;text-align:center}
+.addsetbtn{
+  background:none;border:1.5px dashed #1a1a1a;
+  border-radius:10px;color:#2a2a2a;
+  font-size:12px;font-weight:700;letter-spacing:.06em;
+  padding:10px;width:100%;margin-top:8px;
+}
+.addexbtn{
+  background:none;border:1.5px dashed #1e1e1e;
+  border-radius:18px;color:#333;
+  font-size:14px;font-weight:700;
+  padding:18px;width:100%;margin-top:4px;
+  letter-spacing:.04em;
+}
+
+/* ═══════════════════════════════════
+   REPORT SCREEN
+═══════════════════════════════════ */
+
+/* LIME HERO CARD */
+.weight-hero{
+  background:#c8ff00;border-radius:28px;
+  padding:26px 28px;margin-bottom:12px;
+  display:flex;justify-content:space-between;align-items:flex-end;
+}
+.wh-left .wh-eyebrow{
+  font-size:10px;font-weight:900;
+  color:#3a4a00;letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px;
+}
+.wh-num{
+  font-size:72px;font-weight:900;
+  color:#0a0a0a;line-height:.85;letter-spacing:-4px;
+}
+.wh-dec{font-size:36px;letter-spacing:-2px}
+.wh-right{text-align:right;padding-bottom:2px}
+.wh-unit{font-size:16px;font-weight:700;color:#4a6000}
+.wh-trend{font-size:12px;color:#3a4a00;margin-top:8px;font-weight:600}
+.wh-tag{
+  font-size:9px;font-weight:900;color:#3a4a00;
+  letter-spacing:.14em;text-transform:uppercase;margin-top:4px;
+}
+
+/* PROGRESS BARS */
+.bars-card{
+  background:#141414;border-radius:22px;
+  padding:22px 22px;margin-bottom:12px;
+}
+.barrow{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.barrow:last-child{margin-bottom:0}
+.bar-name{font-size:11px;font-weight:700;color:#333;letter-spacing:.06em;width:62px;flex-shrink:0}
+.bar-track{flex:1;height:5px;background:#1e1e1e;border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.bar-value{
+  font-size:13px;font-weight:700;color:#888;
+  width:52px;text-align:right;flex-shrink:0;
+  font-variant-numeric:tabular-nums;
+}
+
+/* TWO PILLS */
+.twopill{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.pdark{background:#141414;border-radius:18px;padding:18px 20px;border:1.5px solid #141414}
+.pdark.lime{background:#0e1800;border-color:#c8ff00}
+.pd-label{font-size:10px;font-weight:700;color:#333;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+.pd-value{font-size:26px;font-weight:900;color:#f0f0f0;letter-spacing:-1px;line-height:1}
+.pd-value.lime{color:#c8ff00}
+.pd-unit{font-size:13px;font-weight:400;color:#555;margin-left:3px}
+
+/* BUTTONS */
+.btn-lime{
+  width:100%;padding:20px;
+  background:#c8ff00;color:#0a0a0a;
+  border-radius:18px;font-size:15px;font-weight:900;
+  letter-spacing:.08em;text-transform:uppercase;
+  margin-bottom:10px;
+}
+.btn-outline{
+  width:100%;padding:18px;
+  background:none;color:#333;
+  border:1.5px solid #1e1e1e;border-radius:18px;
+  font-size:14px;font-weight:700;
+  letter-spacing:.06em;margin-bottom:10px;
+  transition:color .2s,border-color .2s;
+}
+.btn-outline.ok{color:#c8ff00;border-color:#c8ff00}
+.btn-copy{
+  width:100%;padding:18px;
+  background:#141414;color:#c8ff00;
+  border:1.5px solid #c8ff00;border-radius:18px;
+  font-size:14px;font-weight:900;
+  letter-spacing:.08em;text-transform:uppercase;
+  margin-bottom:10px;transition:all .2s;
+}
+.btn-copy.ok{background:#c8ff00;color:#0a0a0a}
+
+.reportbox{
+  background:#0a0a0a;border:1.5px solid #1a1a1a;border-radius:18px;
+  padding:20px;font-size:11px;line-height:1.9;color:#333;
+  white-space:pre-wrap;word-break:break-word;
+  font-variant-numeric:tabular-nums;margin:10px 0;
+  font-family:ui-monospace,'SF Mono',monospace;
+}
+
+/* ═══════════════════════════════════
+   BRIEF SCREEN
+═══════════════════════════════════ */
+.brief-hero{margin-bottom:32px}
+.brief-snum{
+  font-size:11px;font-weight:900;color:#c8ff00;
+  letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px;
+}
+.brief-stitle{
+  font-size:64px;font-weight:900;color:#f0f0f0;
+  line-height:.85;letter-spacing:-4px;margin-bottom:14px;
+}
+.brief-meta{font-size:12px;color:#2a2a2a;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+
+/* DIRECTIVE CARDS */
+.dcard{
+  border-radius:24px;padding:22px 24px;
+  margin-bottom:10px;border:2px solid #1e3300;
+  background:#0b1400;
+}
+.dcard.red{background:#120800;border-color:#3a1400}
+.dcard.subtle{background:#0f0f0f;border-color:#1a1a1a}
+.dc-priority{
+  font-size:9px;font-weight:900;color:#c8ff00;
+  letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px;
+}
+.dcard.red .dc-priority{color:#ff5500}
+.dc-exname{font-size:14px;color:#7ab800;font-weight:700;margin-bottom:6px}
+.dcard.red .dc-exname{color:#883300}
+.dcard.subtle .dc-exname{color:#444}
+.dc-load{
+  font-size:48px;font-weight:900;color:#f0f0f0;
+  letter-spacing:-2.5px;line-height:.9;margin-bottom:10px;
+}
+.dc-ctx{font-size:13px;color:#555;line-height:1.6}
+.dcard.red .dc-ctx{color:#553322}
+
+/* PROTOCOL */
+.pcard{
+  background:#080f08;border:2px solid #142014;
+  border-radius:24px;padding:22px 24px;margin-bottom:10px;
+}
+.pc-label{
+  font-size:9px;font-weight:900;color:#00cc88;
+  letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px;
+}
+.pc-item{
+  font-size:14px;color:#f0f0f0;
+  padding:10px 0;border-bottom:1px solid #0f200f;line-height:1.5;
+}
+.pc-item:last-child{border-bottom:none}
+.pc-item em{color:#336633;font-style:normal;font-weight:700}
+
+/* PR TABLE */
+.prtable{background:#141414;border-radius:24px;padding:22px 24px;margin-bottom:10px}
+.pt-head{
+  font-size:9px;font-weight:900;color:#333;
+  letter-spacing:.18em;text-transform:uppercase;margin-bottom:16px;
+}
+.ptrow{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:11px 0;border-bottom:1px solid #1a1a1a;
+}
+.ptrow:last-child{border-bottom:none}
+.pt-name{font-size:13px;color:#555;font-weight:600}
+.pt-val{font-size:13px;color:#f0f0f0;font-weight:700;font-variant-numeric:tabular-nums}
+.badge{
+  display:inline-block;font-size:9px;font-weight:900;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 8px;border-radius:6px;margin-left:8px;
+}
+.badge-pr{background:#221400;color:#ffaa00}
+.badge-ok{background:#081808;color:#00cc88}
+.badge-warn{background:#1a0800;color:#ff5500}
+
+/* ═══════════════════════════════════
+   HISTORY SCREEN
+═══════════════════════════════════ */
+.hist-hero{margin-bottom:32px}
+.hist-bignum{
+  font-size:96px;font-weight:900;color:#f0f0f0;
+  line-height:.85;letter-spacing:-5px;
+}
+.hist-sub{
+  font-size:12px;font-weight:700;color:#2a2a2a;
+  letter-spacing:.16em;text-transform:uppercase;margin-top:14px;
+}
+
+.avgstrip{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+.avgcell{background:#141414;border-radius:20px;padding:20px 22px}
+.avg-l{font-size:10px;font-weight:700;color:#2a2a2a;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px}
+.avg-v{font-size:32px;font-weight:900;color:#f0f0f0;letter-spacing:-1.5px;line-height:1}
+.avg-u{font-size:14px;font-weight:400;color:#333;margin-left:3px}
+
+.scard{
+  background:#141414;border-radius:22px;
+  padding:20px 22px;margin-bottom:10px;
+  width:100%;text-align:left;
+  border:1.5px solid transparent;
+  transition:border-color .15s;
+}
+.scard.notion{border-color:#1a1a1a;background:#0f0f0f}
+.scard-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.scard-type{
+  font-size:10px;font-weight:900;
+  letter-spacing:.16em;text-transform:uppercase;margin-bottom:4px;
+}
+.scard-type.push{color:#c8ff00}
+.scard-type.pull{color:#4488ff}
+.scard-type.legs{color:#00cc88}
+.scard-type.full{color:#ffaa00}
+.scard-type.rest{color:#2a2a2a}
+.scard-date{font-size:16px;font-weight:700;color:#f0f0f0;letter-spacing:-.3px}
+.scard-arrow{font-size:12px;color:#222}
+.scard-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.scard-m{font-size:12px;color:#444;font-weight:600}
+.scard-m.pr{color:#ffaa00}
+.scard-m.ok{color:#00cc88}
+.scard-notes{font-size:12px;color:#2a2a2a;line-height:1.55;margin-top:6px}
+.ntag{
+  font-size:8px;font-weight:700;color:#222;letter-spacing:.1em;
+  text-transform:uppercase;background:#1a1a1a;
+  padding:2px 7px;border-radius:5px;margin-left:8px;
+}
+</style>
+</head>
+<body>
+
+<!-- LOG -->
+<div class="screen active" id="screen-log">
+  <div class="date-hero">
+    <div class="date-big" id="log-day-num"></div>
+    <div class="date-sub" id="log-date-sub"></div>
+  </div>
+
+  <div class="srule"><span class="srule-label">Body</span></div>
+  <div style="margin-bottom:12px">
+    <div class="flabel">Weight kg</div>
+    <input type="number" inputmode="decimal" placeholder="72.0" id="f-weight"/>
+  </div>
+
+  <div class="srule"><span class="srule-label">Recovery</span></div>
+  <div style="margin-bottom:12px">
+    <div class="flabel">Sleep hours</div>
+    <input type="number" inputmode="decimal" placeholder="7.5" id="f-sleep"/>
+  </div>
+  <div style="margin-bottom:12px">
+    <div class="flabel">Sleep quality 1–10</div>
+    <input type="number" inputmode="numeric" placeholder="8" id="f-sleepq"/>
+  </div>
+
+  <div class="srule"><span class="srule-label">Nutrition</span></div>
+  <div style="margin-bottom:12px">
+    <div class="flabel">Protein g</div>
+    <input type="number" inputmode="numeric" placeholder="Target 120–155g" id="f-protein"/>
+  </div>
+  <div style="margin-bottom:12px">
+    <div class="flabel">Calories kcal</div>
+    <input type="number" inputmode="numeric" placeholder="Target 1,950–2,000" id="f-cals"/>
+  </div>
+  <div style="margin-bottom:8px">
+    <div class="togrow" onclick="tog('creatine')">
+      <div class="togtrack" id="t-creatine"><div class="togthumb"></div></div>
+      <span class="toglabel">Creatine taken today</span>
+    </div>
+  </div>
+
+  <div class="srule"><span class="srule-label">Activity</span></div>
+  <div style="margin-bottom:12px">
+    <div class="flabel">Steps</div>
+    <input type="number" inputmode="numeric" placeholder="9,000" id="f-steps"/>
+  </div>
+
+  <div class="srule"><span class="srule-label">Training</span></div>
+  <div style="margin-bottom:16px">
+    <div class="togrow" onclick="tog('workout')">
+      <div class="togtrack" id="t-workout"><div class="togthumb"></div></div>
+      <span class="toglabel">Trained today</span>
+    </div>
+  </div>
+  <div id="workout-detail" style="display:none">
+    <div class="flabel" style="margin-bottom:12px">Session type</div>
+    <div class="chiprow" id="type-chips"></div>
+    <div class="flabel" style="margin-bottom:12px">Exercises</div>
+    <div id="ex-list"></div>
+    <button class="addexbtn" onclick="addEx()">+ Add exercise</button>
+  </div>
+
+  <div class="srule"><span class="srule-label">Notes</span></div>
+  <div style="margin-bottom:40px">
+    <textarea rows="4" placeholder="Energy, form, anything worth remembering…" id="f-notes"></textarea>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div class="screen" id="screen-report">
+  <div style="margin-bottom:28px">
+    <div style="font-size:10px;font-weight:900;color:#c8ff00;letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px">Daily Report</div>
+    <div style="font-size:40px;font-weight:900;color:#f0f0f0;letter-spacing:-2px;line-height:1" id="r-date-hero"></div>
+  </div>
+
+  <!-- LIME WEIGHT HERO -->
+  <div class="weight-hero">
+    <div class="wh-left">
+      <div class="wh-eyebrow">Body weight</div>
+      <div class="wh-num" id="r-wnum">—</div>
+      <div class="wh-trend" id="r-wtrend">Cut phase active</div>
+    </div>
+    <div class="wh-right">
+      <div class="wh-unit">kg</div>
+      <div class="wh-tag">On track</div>
+    </div>
+  </div>
+
+  <!-- PROGRESS BARS -->
+  <div class="bars-card">
+    <div class="barrow">
+      <span class="bar-name">Protein</span>
+      <div class="bar-track"><div class="bar-fill" id="bf-protein" style="width:0%;background:#c8ff00"></div></div>
+      <span class="bar-value" id="bv-protein">—</span>
+    </div>
+    <div class="barrow">
+      <span class="bar-name">Calories</span>
+      <div class="bar-track"><div class="bar-fill" id="bf-cals" style="width:0%;background:#4488ff"></div></div>
+      <span class="bar-value" id="bv-cals">—</span>
+    </div>
+    <div class="barrow">
+      <span class="bar-name">Steps</span>
+      <div class="bar-track"><div class="bar-fill" id="bf-steps" style="width:0%;background:#00cc88"></div></div>
+      <span class="bar-value" id="bv-steps">—</span>
+    </div>
+    <div class="barrow">
+      <span class="bar-name">Sleep</span>
+      <div class="bar-track"><div class="bar-fill" id="bf-sleep" style="width:0%;background:#ffaa00"></div></div>
+      <span class="bar-value" id="bv-sleep">—</span>
+    </div>
+  </div>
+
+  <!-- CREATINE + SESSION -->
+  <div class="twopill">
+    <div class="pdark" id="pd-creatine">
+      <div class="pd-label">Creatine</div>
+      <div class="pd-value" id="pv-creatine">—</div>
+    </div>
+    <div class="pdark">
+      <div class="pd-label">Session</div>
+      <div class="pd-value" id="pv-session" style="font-size:18px;letter-spacing:-.5px">—</div>
+    </div>
+  </div>
+
+  <div style="height:1px;background:#141414;margin:18px 0"></div>
+  <button class="btn-lime" onclick="genReport()">⚡ Generate Report</button>
+  <button class="btn-outline" id="save-btn" onclick="saveEntry()">Save Entry</button>
+
+  <div id="r-out" style="display:none">
+    <button class="btn-copy" id="copy-top" onclick="copyReport()">Copy — Paste into Claude</button>
+    <div class="reportbox" id="r-text"></div>
+    <button class="btn-copy" id="copy-bot" onclick="copyReport()">Copy — Paste into Claude</button>
+  </div>
+  <div style="height:20px"></div>
+</div>
+
+<!-- BRIEF -->
+<div class="screen" id="screen-brief">
+  <div class="brief-hero">
+    <div class="brief-snum">Session 67 · Push Day</div>
+    <div class="brief-stitle">Next<br/>Session</div>
+    <div class="brief-meta">Written by Claude · Jun 19 2026</div>
+  </div>
+
+  <div class="dcard">
+    <div class="dc-priority">Priority 1 — Do this first, no negotiation</div>
+    <div class="dc-exname">Seated Dip</div>
+    <div class="dc-load">84KG<br/>× 3×8</div>
+    <div class="dc-ctx">Stalled at 3×5 for 4 consecutive sessions (S56, S59, S62, S64). Today fixes it. Arrive fresh. Full 3 min rest between sets. Hit 3×8 clean → 88KG unlocked next Push Day.</div>
+  </div>
+
+  <div class="dcard" style="border-color:#1e2e00;background:#0c1400">
+    <div class="dc-priority">Priority 2 — 90KG gate</div>
+    <div class="dc-exname">Shoulder Press Machine</div>
+    <div class="dc-load">85KG<br/>× 3×10</div>
+    <div class="dc-ctx">Hit 3×9 in S64. One rep from unlocking 90KG. Execute clean — no grinding.</div>
+  </div>
+
+  <div class="dcard" style="border-color:#182800;background:#0b1100">
+    <div class="dc-priority">Priority 3</div>
+    <div class="dc-exname">Incline Press</div>
+    <div class="dc-load">70KG<br/>× 3×10</div>
+    <div class="dc-ctx">Hit 3×8 at 70KG in S64. Build to 75KG when 3×10 clean.</div>
+  </div>
+
+  <div class="dcard" style="border-color:#182800;background:#0b1100">
+    <div class="dc-priority">Priority 4 — unlocked</div>
+    <div class="dc-exname">Pec Deck</div>
+    <div class="dc-load">70KG<br/>× 3×10</div>
+    <div class="dc-ctx">65KG × 3×10 clean in S64. Full stretch at bottom. Full 2 min rest.</div>
+  </div>
+
+  <div class="dcard subtle">
+    <div class="dc-priority" style="color:#444">Finish</div>
+    <div class="dc-exname">CPV + Rear Delt Fly</div>
+    <div class="dc-load" style="font-size:32px;color:#888">94KG<br/>59KG</div>
+    <div class="dc-ctx" style="color:#333">CPV 94KG × 3×10. Rear Delt 59KG × 3×8. Was missing last 2 Push sessions — both must complete today.</div>
+  </div>
+
+  <div class="dcard red">
+    <div class="dc-priority">Stall alert — 4 sessions</div>
+    <div class="dc-exname">Why the Dip is stuck</div>
+    <div class="dc-load" style="font-size:28px;color:#cc3300">S56 → S59<br/>→ S62 → S64</div>
+    <div class="dc-ctx">Pattern = time pressure + fatigue from preceding exercises. Fix: Dip goes first before anything else. No warm-up chatter, no fiddling. Load it, sit down, execute.</div>
+  </div>
+
+  <div class="pcard">
+    <div class="pc-label">Pre-Session Protocol</div>
+    <div class="pc-item"><em>60–90 min before gym:</em> 30g protein + carbs. Egg + rice or brown bread. No fasted sessions.</div>
+    <div class="pc-item"><em>Creatine:</em> 5g today regardless of training.</div>
+    <div class="pc-item"><em>Water:</em> 3L target. Last 2 sessions tracking under 2.5L.</div>
+    <div class="pc-item"><em>Rest periods:</em> 3 min on Dip. 2 min on all other exercises.</div>
+  </div>
+
+  <div class="prtable">
+    <div class="pt-head">Current Push Benchmarks</div>
+    <div class="ptrow"><span class="pt-name">Seated Dip</span><span class="pt-val">84KG × 3×5<span class="badge badge-warn">STALLED</span></span></div>
+    <div class="ptrow"><span class="pt-name">Shoulder Press</span><span class="pt-val">85KG × 3×9<span class="badge badge-pr">S64 PR</span></span></div>
+    <div class="ptrow"><span class="pt-name">Incline Press</span><span class="pt-val">70KG × 3×8<span class="badge badge-pr">S64 PR</span></span></div>
+    <div class="ptrow"><span class="pt-name">Pec Deck</span><span class="pt-val">65KG × 3×10<span class="badge badge-ok">clean</span></span></div>
+    <div class="ptrow"><span class="pt-name">CPV</span><span class="pt-val">94KG × 3×8<span class="badge badge-ok">building</span></span></div>
+    <div class="ptrow"><span class="pt-name">Body weight</span><span class="pt-val">72.0 kg</span></div>
+  </div>
+  <div style="height:20px"></div>
+</div>
+
+<!-- HISTORY -->
+<div class="screen" id="screen-history">
+  <div class="hist-hero">
+    <div class="hist-bignum" id="hist-bignum">66</div>
+    <div class="hist-sub">Sessions · Dec 2025 → Now</div>
+  </div>
+  <div class="avgstrip" id="hist-avgs"></div>
+  <div id="hist-list"></div>
+  <div style="height:20px"></div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <button class="nt on" id="nav-log" onclick="go('log')">
+    <div class="nd"></div><div class="nl">Log</div>
+  </button>
+  <button class="nt" id="nav-report" onclick="go('report')">
+    <div class="nd"></div><div class="nl">Report</div>
+  </button>
+  <button class="nt" id="nav-brief" onclick="go('brief')">
+    <div class="nd"></div><div class="nl">Brief</div>
+  </button>
+  <button class="nt" id="nav-history" onclick="go('history')">
+    <div class="nd"></div><div class="nl">History</div>
+  </button>
+</nav>
+
+<script>
+var SK='wl_v4';
+var WTYPES=['Push','Pull','Legs','Full Body','Cardio','Active Recovery'];
+var S={creatine:false,workout:false,wtype:'Push',exercises:[]};
+var RT='';
+
+var BI=[
+  {date:'2025-12-01',type:'Push',notes:'S1 — Program start. Baselines established.',prs:false},
+  {date:'2025-12-05',type:'Pull',notes:'S2 — Long Pull baseline.',prs:false},
+  {date:'2025-12-08',type:'Legs',notes:'S3 — Leg Press baseline. Calf 12.5KG.',prs:false},
+  {date:'2025-12-12',type:'Push',notes:'S4 — Seated Dip baseline.',prs:false},
+  {date:'2025-12-15',type:'Pull',notes:'S5',prs:false},
+  {date:'2025-12-18',type:'Legs',notes:'S6',prs:false},
+  {date:'2025-12-22',type:'Push',notes:'S7',prs:false},
+  {date:'2025-12-26',type:'Pull',notes:'S8',prs:false},
+  {date:'2025-12-29',type:'Legs',notes:'S9',prs:false},
+  {date:'2026-01-05',type:'Push',notes:'S10',prs:false},
+  {date:'2026-01-08',type:'Push',notes:'S11 — Incline PR +5KG from Dec.',prs:true},
+  {date:'2026-01-12',type:'Pull',notes:'S12',prs:false},
+  {date:'2026-01-15',type:'Legs',notes:'S13',prs:false},
+  {date:'2026-01-19',type:'Push',notes:'S14',prs:false},
+  {date:'2026-01-23',type:'Push',notes:'S15 — Multiple PRs. PO session.',prs:true},
+  {date:'2026-01-26',type:'Legs',notes:'S16',prs:false},
+  {date:'2026-01-29',type:'Pull',notes:'S17',prs:false},
+  {date:'2026-02-02',type:'Push',notes:'S18',prs:false},
+  {date:'2026-02-04',type:'Legs',notes:'S19 — DOMS. 72h directive issued.',prs:false},
+  {date:'2026-02-09',type:'Pull',notes:'S20 — Arms PR. Knee flag: warmth under load.',prs:true},
+  {date:'2026-02-21',type:'Full Body',notes:'S21 — Mega session. 16,895KG / 212 min. Extension Leg PR.',prs:true},
+  {date:'2026-02-26',type:'Push',notes:'S29 — Push PR. Orion session.',prs:true},
+  {date:'2026-03-05',type:'Legs',notes:'S33 — Knee 7/10 warmth. Monitoring.',prs:false},
+  {date:'2026-03-06',type:'Full Body',notes:'S34 — Full Upper Body.',prs:false},
+  {date:'2026-03-09',type:'Legs',notes:'S35 — Knee protocol SUSPENDED. LP 95KG × 3×10 restored.',prs:false},
+  {date:'2026-03-10',type:'Push',notes:'S36 — Dip 84KG PR — first time at this load.',prs:true},
+  {date:'2026-03-16',type:'Full Body',notes:'HOME WEEK — Backpack rows. No gym.',prs:false},
+  {date:'2026-03-23',type:'Pull',notes:'S37 — Return after 13 days. Long Pull reset to 45KG.',prs:false},
+  {date:'2026-03-25',type:'Push',notes:'S38 — Dip 84KG × 3×10. 12,060KG total.',prs:false},
+  {date:'2026-04-01',type:'Legs',notes:'S39',prs:false},
+  {date:'2026-04-02',type:'Legs',notes:'S40 — Extension Leg PR. Pre-gym snack protocol set.',prs:true},
+  {date:'2026-04-05',type:'Push',notes:'S40b — Incline 60KG × 3×12 confirmed.',prs:true},
+  {date:'2026-04-07',type:'Pull',notes:'S41 — Dip 84KG × 3×10 rest-pause. EZ Bar Curl PR.',prs:true},
+  {date:'2026-04-11',type:'Legs',notes:'S42',prs:false},
+  {date:'2026-04-25',type:'Full Body',notes:'S45',prs:false},
+  {date:'2026-05-09',type:'Full Body',notes:'S46 — Return 14 days gap. Dip 79KG × 3×10.',prs:false},
+  {date:'2026-05-12',type:'Legs',notes:'S47 — LP 100KG × 3×10 restored.',prs:false},
+  {date:'2026-05-13',type:'Push',notes:'S48 — RULE LOCKED: Dip first every Push Day. 11,037KG.',prs:false},
+  {date:'2026-05-14',type:'Pull',notes:'S49 — Long Pull 45KG × 3×8. RSP 50KG × 3×8.',prs:false},
+  {date:'2026-05-18',type:'Legs',notes:'S50 — LP 110KG × 3×10. Century mark surpassed. Prone Curl 45KG PR.',prs:true},
+  {date:'2026-05-19',type:'Push',notes:'S51 — Dip 79KG × 3×8 — 3rd consecutive below 84KG.',prs:false},
+  {date:'2026-05-23',type:'Full Body',notes:'S52 — Dip 79KG × 4×5 — 4th below 84KG.',prs:false},
+  {date:'2026-05-25',type:'Pull',notes:'S53 — RSP 55KG × 3×7 PR. Long Pull 45KG × 3×10 hit — 50KG unlocked.',prs:true},
+  {date:'2026-05-26',type:'Push',notes:'S54 — Dip 79KG × 3×8. 5th consecutive below 84KG.',prs:false},
+  {date:'2026-05-27',type:'Legs',notes:'S55 — LP 115KG × 3×10 PR. Ext Leg 59KG × 3×7.',prs:true},
+  {date:'2026-05-29',type:'Push',notes:'S56 — Dip 84KG × 3×5. Pattern broken after 5 sessions at 79KG.',prs:true},
+  {date:'2026-06-01',type:'Pull',notes:'S57 — Long Pull 50KG introduced.',prs:false},
+  {date:'2026-06-04',type:'Legs',notes:'S58',prs:false},
+  {date:'2026-06-07',type:'Push',notes:'S59 — Dip 84KG × 3×5. No progression from S56.',prs:false},
+  {date:'2026-06-09',type:'Pull',notes:'S60',prs:false},
+  {date:'2026-06-10',type:'Legs',notes:'S61 — Ext Leg 59KG × 3×10 rep PR. Prone Curl 50KG × 3×10 weight PR.',prs:true},
+  {date:'2026-06-12',type:'Push',notes:'S62 — Dip 84KG × 3×5. 3rd consecutive. Missing: Rear Delt, Tricep.',prs:false},
+  {date:'2026-06-14',type:'Pull',notes:'S63',prs:false},
+  {date:'2026-06-17',type:'Push',notes:'S64 — SP 85KG × 3×9 PR. Incline 70KG × 3×8 PR. Pec Deck 65KG × 3×10 clean. Dip 84KG × 3×5 — 4th stall. CPV 94KG × 3×8. Score 86.',prs:true},
+  {date:'2026-06-18',type:'Legs',notes:'S65 — 5 PRs. LP 120KG × 3×12. Ext Leg 64KG. Prone 55KG. Calf 30KG × 4×15. Weight 72KG. Score 79.',prs:true},
+  {date:'2026-06-19',type:'Pull',notes:'S66 — RSP 60KG × 3×8 PR. Camber 39KG rep hit. Long Pull 50KG × 3×6 stalled. Low Row 35KG × 3×5. Score 75.',prs:true}
+];
+
+function tKey(){return new Date().toISOString().slice(0,10)}
+function fmtDate(iso){var d=new Date(iso+'T00:00:00');return d.toLocaleDateString('en-ZA',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}
+function loadDB(){try{var r=localStorage.getItem(SK);return r?JSON.parse(r):{entries:[]}}catch(e){return{entries:[]}}}
+function saveDB(db){try{localStorage.setItem(SK,JSON.stringify(db))}catch(e){}}
+function gv(id){var e=document.getElementById(id);return e?e.value.trim():''}
+function sv(id,v){var e=document.getElementById(id);if(e)e.value=v||''}
+
+function go(name){
+  ['log','report','brief','history'].forEach(function(s){
+    document.getElementById('screen-'+s).classList.remove('active');
+    document.getElementById('nav-'+s).classList.remove('on');
+  });
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('on');
+  if(name==='report')refreshReport();
+  if(name==='history')refreshHistory();
+}
+
+function tog(k){
+  S[k]=!S[k];
+  var t=document.getElementById('t-'+k);
+  S[k]?t.classList.add('on'):t.classList.remove('on');
+  if(k==='workout')document.getElementById('workout-detail').style.display=S.workout?'block':'none';
+}
+
+function buildChips(){
+  var r=document.getElementById('type-chips');if(!r)return;r.innerHTML='';
+  WTYPES.forEach(function(t){
+    var b=document.createElement('button');b.className='chip'+(S.wtype===t?' on':'');
+    b.textContent=t;b.onclick=function(){S.wtype=t;buildChips()};r.appendChild(b);
+  });
+}
+
+function addEx(){S.exercises.push({name:'',sets:[{w:'',r:''}]});renderEx()}
+function remEx(i){syncEx();S.exercises.splice(i,1);renderEx()}
+function addSet(i){syncEx();S.exercises[i].sets.push({w:'',r:''});renderEx()}
+function remSet(i,si){syncEx();S.exercises[i].sets.splice(si,1);if(!S.exercises[i].sets.length)S.exercises[i].sets.push({w:'',r:''});renderEx()}
+
+function syncEx(){
+  var list=document.getElementById('ex-list');if(!list)return;
+  list.querySelectorAll('.exblock').forEach(function(b,i){
+    if(!S.exercises[i])return;
+    var ni=b.querySelector('.exni');if(ni)S.exercises[i].name=ni.value;
+    b.querySelectorAll('.setrow').forEach(function(row,si){
+      if(!S.exercises[i].sets[si])return;
+      var ins=row.querySelectorAll('input');
+      if(ins[0])S.exercises[i].sets[si].w=ins[0].value;
+      if(ins[1])S.exercises[i].sets[si].r=ins[1].value;
+    });
+  });
+}
+
+function renderEx(){
+  var list=document.getElementById('ex-list');if(!list)return;list.innerHTML='';
+  S.exercises.forEach(function(ex,i){
+    var b=document.createElement('div');b.className='exblock';
+    var top=document.createElement('div');top.className='extop';
+    var ni=document.createElement('input');ni.className='exni';ni.placeholder='Exercise '+(i+1);ni.value=ex.name||'';ni.oninput=function(){ex.name=this.value};
+    var db=document.createElement('button');db.className='exdelbtn';db.textContent='✕';db.onclick=(function(idx){return function(){syncEx();remEx(idx)}})(i);
+    top.appendChild(ni);top.appendChild(db);b.appendChild(top);
+    var hdr=document.createElement('div');hdr.className='sethdr';hdr.innerHTML='<span></span><span>kg</span><span>reps</span><span></span>';b.appendChild(hdr);
+    ex.sets.forEach(function(s,si){
+      var row=document.createElement('div');row.className='setrow';
+      var num=document.createElement('div');num.className='setn';num.textContent='S'+(si+1);
+      var wi=document.createElement('input');wi.type='number';wi.inputMode='decimal';wi.placeholder='0';wi.value=s.w||'';wi.oninput=function(){s.w=this.value};
+      var ri=document.createElement('input');ri.type='number';ri.inputMode='numeric';ri.placeholder='0';ri.value=s.r||'';ri.oninput=function(){s.r=this.value};
+      var sd=document.createElement('button');sd.className='setdelbtn';sd.textContent='✕';sd.onclick=(function(ii,si2){return function(){syncEx();remSet(ii,si2)}})(i,si);
+      row.appendChild(num);row.appendChild(wi);row.appendChild(ri);row.appendChild(sd);b.appendChild(row);
+    });
+    var asb=document.createElement('button');asb.className='addsetbtn';asb.textContent='+ Add set';asb.onclick=(function(idx){return function(){syncEx();addSet(idx)}})(i);
+    b.appendChild(asb);list.appendChild(b);
+  });
+}
+
+function collectEntry(){
+  syncEx();
+  return{date:tKey(),weight:gv('f-weight'),sleep:gv('f-sleep'),sleepQ:gv('f-sleepq'),
+    protein:gv('f-protein'),cals:gv('f-cals'),creatine:S.creatine,steps:gv('f-steps'),
+    workout:S.workout,wtype:S.wtype,exercises:JSON.parse(JSON.stringify(S.exercises)),notes:gv('f-notes')};
+}
+
+function saveEntry(){
+  var e=collectEntry();var db=loadDB();
+  db.entries=db.entries.filter(function(x){return x.date!==e.date});
+  db.entries.push(e);db.entries.sort(function(a,b){return a.date.localeCompare(b.date)});
+  saveDB(db);
+  var btn=document.getElementById('save-btn');
+  btn.textContent='✓ Saved';btn.classList.add('ok');
+  setTimeout(function(){btn.textContent='Save Entry';btn.classList.remove('ok')},2500);
+}
+
+function refreshReport(){
+  var e=collectEntry();
+  document.getElementById('r-date-hero').textContent=fmtDate(tKey());
+  var w=e.weight;
+  document.getElementById('r-wnum').textContent=w||'—';
+  document.getElementById('r-wtrend').textContent=w?'Cut phase active · baseline 72.0 kg':'No weight logged today';
+  function pct(v,max){return v?Math.min(100,Math.round(parseFloat(v)/max*100)):0}
+  document.getElementById('bf-protein').style.width=pct(e.protein,155)+'%';
+  document.getElementById('bv-protein').textContent=e.protein?e.protein+'g':'—';
+  document.getElementById('bf-cals').style.width=pct(e.cals,2000)+'%';
+  document.getElementById('bv-cals').textContent=e.cals?e.cals:'—';
+  document.getElementById('bf-steps').style.width=pct(e.steps,10000)+'%';
+  document.getElementById('bv-steps').textContent=e.steps?parseInt(e.steps).toLocaleString():'—';
+  document.getElementById('bf-sleep').style.width=pct(e.sleep,8)+'%';
+  document.getElementById('bv-sleep').textContent=e.sleep?e.sleep+'h':'—';
+  var pvc=document.getElementById('pv-creatine');
+  pvc.textContent=e.creatine?'YES ✓':'NO ✗';pvc.className='pd-value'+(e.creatine?' lime':'');
+  document.getElementById('pd-creatine').className='pdark'+(e.creatine?' lime':'');
+  document.getElementById('pv-session').textContent=e.workout?e.wtype+' Day':'Rest Day';
+}
+
+function genReport(){
+  var e=collectEntry();var db=loadDB();
+  var recent=db.entries.filter(function(x){return x.date!==e.date}).slice(-6).concat([e]);
+  function avg(fn){var v=recent.map(fn).filter(function(x){return x&&!isNaN(parseFloat(x))});return v.length?(v.reduce(function(a,b){return a+parseFloat(b)},0)/v.length).toFixed(1):'N/A'}
+  var crPct=recent.length?Math.round(recent.filter(function(x){return x.creatine}).length/recent.length*100):0;
+  var gym=recent.filter(function(x){return x.workout}).length;
+  var exBlock=e.workout&&e.exercises.length?e.exercises.map(function(ex){
+    return(ex.name||'Unnamed')+'\n'+ex.sets.map(function(s,i){return'  Set '+(i+1)+': '+(s.w||'?')+'kg × '+(s.r||'?')+' reps'}).join('\n');
+  }).join('\n\n'):e.workout?'No exercises logged':'Rest day';
+  RT=[
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'WARRIOR LOG — S67 REPORT',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━','',
+    'Date: '+fmtDate(e.date),
+    'Goal: Cut to 12–13% BF by Aug 2026 → Phase 2 lean bulk','',
+    '── BODY ─────────────────────',
+    'Weight: '+(e.weight||'N/A')+' kg  |  Baseline: 72.0 kg (S65)','',
+    '── RECOVERY ─────────────────',
+    'Sleep: '+(e.sleep||'N/A')+' h  |  Quality: '+(e.sleepQ||'N/A')+'/10','',
+    '── NUTRITION ────────────────',
+    'Protein: '+(e.protein||'N/A')+' g  |  Target: 120–155g',
+    'Calories: '+(e.cals||'N/A')+' kcal  |  Target: 1,950–2,000','',
+    '── SUPPLEMENTS ──────────────',
+    'Creatine: '+(e.creatine?'YES ✓':'NO ✗'),'',
+    '── ACTIVITY ─────────────────',
+    'Steps: '+(e.steps||'N/A'),'',
+    '── TRAINING ─────────────────',
+    'Session: '+(e.workout?e.wtype+' Day':'Rest Day'),'',
+    exBlock,'',
+    '── 7-DAY CONTEXT ────────────',
+    'Avg weight: '+avg(function(x){return x.weight})+' kg',
+    'Avg protein: '+avg(function(x){return x.protein})+' g',
+    'Avg sleep: '+avg(function(x){return x.sleep})+' h',
+    'Avg steps: '+avg(function(x){return x.steps}),
+    'Gym sessions: '+gym+'/'+recent.length,
+    'Creatine compliance: '+crPct+'%','',
+    '── FULL PROGRAM CONTEXT ─────',
+    '66 sessions: Dec 2025 → Jun 2026',
+    'S64 Push: SP 85KG×3×9 PR | Incline 70KG×3×8 PR | Dip 84KG×3×5 (stalled 4×)',
+    'S65 Legs: 5 PRs — LP 120KG×3×12 | ExtLeg 64KG | Prone 55KG | Calf ×4×15',
+    'S66 Pull: RSP 60KG×3×8 PR | Long Pull 50KG×3×6 stalled since S57',
+    'S67 target: Dip stall resolution + SP gate crack','',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'COACHING REQUESTS','',
+    '1. Recovery — 3 sessions in 3 days impact on readiness',
+    '2. Dip stall root cause — S56/S59/S62/S64 all identical reps',
+    '3. Long Pull — 50KG×3×6 since S57, what intervention?',
+    '4. Protein and calorie sufficiency for cut phase',
+    '5. Full recommendations for Session 68 after today',
+    '6. Cut trajectory — on track for Aug 2026?','',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━'
+  ].join('\n');
+  document.getElementById('r-text').textContent=RT;
+  document.getElementById('r-out').style.display='block';
+  setCopy(false);
+  setTimeout(function(){document.getElementById('r-out').scrollIntoView({behavior:'smooth',block:'start'})},50);
+}
+
+function setCopy(ok){
+  ['copy-top','copy-bot'].forEach(function(id){
+    var b=document.getElementById(id);if(!b)return;
+    b.textContent=ok?'✓ Copied — paste into Claude':'Copy — Paste into Claude';
+    ok?b.classList.add('ok'):b.classList.remove('ok');
+  });
+}
+function copyReport(){
+  if(!RT)return;
+  var done=function(){setCopy(true);setTimeout(function(){setCopy(false)},3000)};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(RT).then(done).catch(fb);
+  else fb();
+}
+function fb(){
+  var ta=document.createElement('textarea');ta.value=RT;
+  ta.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy')}catch(e){}
+  document.body.removeChild(ta);
+  setCopy(true);setTimeout(function(){setCopy(false)},3000);
+}
+
+function typeClass(t){
+  return{Push:'push',Pull:'pull',Legs:'legs','Full Body':'full','Active Recovery':'rest',Cardio:'rest'}[t]||'';
+}
+
+function refreshHistory(){
+  var db=loadDB();var uE=db.entries;
+  var uD={};uE.forEach(function(e){uD[e.date]=true});
+  var all=BI.filter(function(b){return!uD[b.date]}).map(function(b){
+    return{date:b.date,wtype:b.type,notes:b.notes,prs:b.prs,builtin:true};
+  }).concat(uE.map(function(e){
+    return{date:e.date,wtype:e.wtype,notes:e.notes,prs:false,builtin:false,
+      weight:e.weight,protein:e.protein,steps:e.steps,creatine:e.creatine,workout:e.workout,exercises:e.exercises};
+  }));
+  all.sort(function(a,b){return b.date.localeCompare(a.date)});
+  document.getElementById('hist-bignum').textContent=all.length;
+  var avgsEl=document.getElementById('hist-avgs');
+  if(uE.length>=2){
+    var wV=uE.filter(function(e){return e.weight}).map(function(e){return parseFloat(e.weight)});
+    var pV=uE.filter(function(e){return e.protein}).map(function(e){return parseFloat(e.protein)});
+    var avgW=wV.length?(wV.reduce(function(a,b){return a+b},0)/wV.length).toFixed(1):'—';
+    var avgP=pV.length?Math.round(pV.reduce(function(a,b){return a+b},0)/pV.length):'—';
+    avgsEl.innerHTML='<div class="avgcell"><div class="avg-l">Avg Weight</div><div class="avg-v">'+avgW+'<span class="avg-u">kg</span></div></div>'+
+      '<div class="avgcell"><div class="avg-l">Avg Protein</div><div class="avg-v">'+avgP+'<span class="avg-u">g</span></div></div>';
+  }else{avgsEl.innerHTML=''}
+  var list=document.getElementById('hist-list');list.innerHTML='';
+  all.forEach(function(e){
+    var btn=document.createElement('button');
+    btn.className='scard'+(e.builtin?' notion':'');
+    var meta=[];
+    if(e.weight)meta.push('<span class="scard-m">'+e.weight+' kg</span>');
+    if(e.protein)meta.push('<span class="scard-m">'+e.protein+'g prot</span>');
+    if(e.steps)meta.push('<span class="scard-m">'+parseInt(e.steps).toLocaleString()+' steps</span>');
+    if(e.creatine)meta.push('<span class="scard-m ok">✓ Creatine</span>');
+    if(e.prs)meta.push('<span class="scard-m pr">★ PR</span>');
+    btn.innerHTML='<div class="scard-top"><div><div class="scard-type '+typeClass(e.wtype||'')+'">'+
+      (e.wtype||'Session')+(e.builtin?'<span class="ntag">Notion</span>':'')+
+      '</div><div class="scard-date">'+fmtDate(e.date)+'</div></div>'+
+      '<div class="scard-arrow">'+(e.builtin?'':'→')+'</div></div>'+
+      '<div class="scard-meta">'+meta.join('')+'</div>'+
+      (e.notes?'<div class="scard-notes">'+e.notes.slice(0,120)+(e.notes.length>120?'…':'')+'</div>':'');
+    if(!e.builtin)btn.onclick=(function(entry){return function(){loadEntry(entry)}})(e);
+    list.appendChild(btn);
+  });
+}
+
+function loadEntry(e){
+  sv('f-weight',e.weight);sv('f-sleep',e.sleep);sv('f-sleepq',e.sleepQ);
+  sv('f-protein',e.protein);sv('f-cals',e.cals);sv('f-steps',e.steps);sv('f-notes',e.notes);
+  S.creatine=!!e.creatine;S.workout=!!e.workout;S.wtype=e.wtype||'Push';
+  S.exercises=e.exercises?JSON.parse(JSON.stringify(e.exercises)):[];
+  var ct=document.getElementById('t-creatine');var wt=document.getElementById('t-workout');
+  S.creatine?ct.classList.add('on'):ct.classList.remove('on');
+  S.workout?wt.classList.add('on'):wt.classList.remove('on');
+  document.getElementById('workout-detail').style.display=S.workout?'block':'none';
+  buildChips();renderEx();go('log');
+}
+
+window.onload=function(){
+  var today=tKey();
+  var d=new Date(today+'T00:00:00');
+  document.getElementById('log-day-num').textContent=d.toLocaleDateString('en-ZA',{day:'numeric'});
+  document.getElementById('log-date-sub').textContent=
+    d.toLocaleDateString('en-ZA',{weekday:'long',month:'long',year:'numeric'}).toUpperCase()+' · S67 PUSH DAY NEXT';
+  buildChips();
+  var db=loadDB();
+  var ex=db.entries.find(function(e){return e.date===today});
+  if(ex)loadEntry(ex);
+};
+</script>
+</body>
+</html>
